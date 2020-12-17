@@ -12,10 +12,31 @@ interface IRequest {
 
 @injectable()
 class CreateCustomerService {
-  constructor(private customersRepository: ICustomersRepository) {}
+  private customersRepository: ICustomersRepository;
+
+  constructor(
+    @inject('CustomersRepository') customersRepository: ICustomersRepository,
+  ) {
+    this.customersRepository = customersRepository;
+  }
 
   public async execute({ name, email }: IRequest): Promise<Customer> {
-    // TODO
+    const findCustomerWithSameEmail = await this.customersRepository.findByEmail(
+      email,
+    );
+
+    if (findCustomerWithSameEmail) {
+      throw new AppError(
+        'This e-mail is already in use with another customer.',
+      );
+    }
+
+    const customer = await this.customersRepository.create({
+      name,
+      email,
+    });
+
+    return customer;
   }
 }
 
